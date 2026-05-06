@@ -1,5 +1,6 @@
 import BankCard3D from './BankCard3D'
 import BankCard from './BankCard'
+import BankCardBack from './BankCardBack'
 
 /* ─── Кнопки под картой ─────────────────────────────────────────────────── */
 const actionButtons = [
@@ -204,7 +205,7 @@ export default function CardPage() {
         <div className="flex-1 flex flex-col items-center" style={{ paddingLeft: 60, paddingRight: 60, paddingTop: 0 }}>
           <div style={{ width: 680 }}>
             <div style={{ height: 30 }} />
-            <BankCard3D tiltLimit={11} scale={1.01} perspective={1600} spotlight>
+            <BankCard3D tiltLimit={11} scale={1.01} perspective={1600} spotlight back={<BankCardBack />}>
               <BankCard />
             </BankCard3D>
             <div style={{ height: 30 }} />

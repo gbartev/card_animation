@@ -2,21 +2,23 @@ import { useRef, useState, useCallback } from 'react'
 
 export default function BankCard3D({
   children,
+  back,
   tiltLimit = 11,
   scale = 1.01,
   perspective = 1600,
   spotlight = true,
 }) {
   const cardRef = useRef(null)
-  const [cardStyle, setCardStyle] = useState({
+  const [isFlipped, setIsFlipped] = useState(false)
+  const [tiltTransform, setTiltTransform] = useState({
     transform: `perspective(${perspective}px) rotateX(0deg) rotateY(0deg) scale(1)`,
     transition: 'transform 0.25s ease-out',
-    willChange: 'transform',
   })
   const [glowStyle, setGlowStyle] = useState({ opacity: 0, transition: 'opacity 0.3s ease-out' })
 
   const handleMouseMove = useCallback(
     (e) => {
+      if (isFlipped) return
       const card = cardRef.current
       if (!card) return
       const rect = card.getBoundingClientRect()
@@ -27,10 +29,9 @@ export default function BankCard3D({
       const rotateX = ((y - cy) / cy) * -tiltLimit
       const rotateY = ((x - cx) / cx) * tiltLimit
 
-      setCardStyle({
+      setTiltTransform({
         transform: `perspective(${perspective}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${scale})`,
         transition: 'transform 0.15s ease-out',
-        willChange: 'transform',
       })
 
       if (spotlight) {
@@ -43,37 +44,85 @@ export default function BankCard3D({
         })
       }
     },
-    [tiltLimit, scale, perspective, spotlight],
+    [isFlipped, tiltLimit, scale, perspective, spotlight],
   )
 
   const handleMouseLeave = useCallback(() => {
-    setCardStyle({
+    if (isFlipped) return
+    setTiltTransform({
       transform: `perspective(${perspective}px) rotateX(0deg) rotateY(0deg) scale(1)`,
       transition: 'transform 0.3s ease-out',
-      willChange: 'transform',
     })
     setGlowStyle(prev => ({ ...prev, opacity: 0, transition: 'opacity 0.4s ease-out' }))
-  }, [perspective])
+  }, [isFlipped, perspective])
+
+  const handleClick = useCallback(() => {
+    if (isFlipped) {
+      // Returning to front — slow and smooth
+      setTiltTransform({
+        transform: `perspective(${perspective}px) rotateX(0deg) rotateY(0deg) scale(1)`,
+        transition: 'transform 0.5s ease', // ← настрой здесь тайминг возврата
+      })
+    } else {
+      // Going to back — quick tilt reset before flip
+      setTiltTransform({
+        transform: `perspective(${perspective}px) rotateX(0deg) rotateY(0deg) scale(1)`,
+        transition: 'transform 0.15s ease-out',
+      })
+    }
+    setIsFlipped(prev => !prev)
+    setGlowStyle(prev => ({ ...prev, opacity: 0, transition: 'opacity 0.2s ease-out' }))
+  }, [isFlipped, perspective])
+
+  const flipperStyle = {
+    position: 'relative',
+    transform: isFlipped
+      ? `perspective(${perspective}px) rotateY(180deg)`
+      : tiltTransform.transform,
+    transition: isFlipped ? 'transform 0.5s ease' : tiltTransform.transition,
+    willChange: 'transform',
+    transformStyle: 'preserve-3d',
+  }
 
   return (
     <div
       ref={cardRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      onClick={handleClick}
       style={{ position: 'relative', display: 'inline-block', cursor: 'pointer' }}
     >
-      <div style={{ ...cardStyle }}>
-        {children}
-        {spotlight && (
+      <div style={flipperStyle}>
+        {/* Front face */}
+        <div style={{ backfaceVisibility: 'hidden', position: 'relative', willChange: 'transform' }}>
+          {children}
+          {spotlight && (
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                borderRadius: 'inherit',
+                pointerEvents: 'none',
+                ...glowStyle,
+              }}
+            />
+          )}
+        </div>
+
+        {/* Back face */}
+        {back && (
           <div
             style={{
+              backfaceVisibility: 'hidden',
               position: 'absolute',
-              inset: 0,
-              borderRadius: 'inherit',
-              pointerEvents: 'none',
-              ...glowStyle,
+              top: 0,
+              left: 0,
+              transform: 'rotateY(180deg)',
+              willChange: 'transform',
             }}
-          />
+          >
+            {back}
+          </div>
         )}
       </div>
     </div>
