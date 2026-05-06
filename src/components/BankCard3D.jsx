@@ -90,7 +90,7 @@ export default function BankCard3D({
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
-      style={{ position: 'relative', display: 'inline-block', cursor: 'pointer' }}
+      style={{ position: 'relative', display: 'inline-block', cursor: 'pointer', userSelect: 'none' }}
     >
       <div style={flipperStyle}>
         {/* Front face */}
