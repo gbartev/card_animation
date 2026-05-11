@@ -9,6 +9,7 @@ export default function BankCard3D({
   spotlight = true,
 }) {
   const cardRef = useRef(null)
+  const isAnimatingRef = useRef(false)
   const [isFlipped, setIsFlipped] = useState(false)
   const [tiltTransform, setTiltTransform] = useState({
     transform: `perspective(${perspective}px) rotateX(0deg) rotateY(0deg) scale(1)`,
@@ -18,7 +19,7 @@ export default function BankCard3D({
 
   const handleMouseMove = useCallback(
     (e) => {
-      if (isFlipped) return
+      if (isFlipped || isAnimatingRef.current) return
       const card = cardRef.current
       if (!card) return
       const rect = card.getBoundingClientRect()
@@ -48,7 +49,7 @@ export default function BankCard3D({
   )
 
   const handleMouseLeave = useCallback(() => {
-    if (isFlipped) return
+    if (isFlipped || isAnimatingRef.current) return
     setTiltTransform({
       transform: `perspective(${perspective}px) rotateX(0deg) rotateY(0deg) scale(1)`,
       transition: 'transform 0.3s ease-out',
@@ -57,6 +58,8 @@ export default function BankCard3D({
   }, [isFlipped, perspective])
 
   const handleClick = useCallback(() => {
+    isAnimatingRef.current = true
+    setTimeout(() => { isAnimatingRef.current = false }, 500)
     if (isFlipped) {
       // Returning to front — slow and smooth
       setTiltTransform({
